@@ -33,8 +33,9 @@ var proxy = function(request, response){
 
     caching.on('end', function(){
         redisObject.response = Buffer.concat(redisCachedResponse, totalLength);
-        var expire = 5 * 60; // 8 hours
-        redis.set(request.url, JSON.stringify(redisObject), 'NX', 'EX', expire);
+        var expire = 5 * 60; // 5 minutes
+
+        redis.set(JSON.stringify(request.redisKey), JSON.stringify(redisObject), 'NX', 'EX', expire);
     });
 
     var connector = http.request(options, function(serverResponse) {
@@ -45,11 +46,40 @@ var proxy = function(request, response){
         serverResponse.pipe(response);
     });
 
-    request.pipe(connector);   
+    var bodyStream = new pass();
+    request.bodyChunks.forEach(function(chunk){
+        bodyStream.write(chunk);
+    });
+
+    bodyStream.end();
+
+    bodyStream.pipe(connector);   
 };
 
 acceptor.on('request', function(request, response) {
-    redis.get(request.url, function(error, redisResponse) {
+
+    var requestReader = new pass();
+    var chunks = [];
+    var chunksLength = 0;
+    requestReader.on('data', function(chunk){
+        chunks.push(chunk);
+        chunksLength += chunk.length;
+    });
+
+    requestReader.on('end', function(){
+        request.bodyChunks = chunks;
+
+        var body = Buffer.concat(chunks, chunksLength);
+        
+        var redisKey = {
+            url: request.url,
+            body: body,
+            method: request.method
+        };
+
+        request.redisKey = redisKey;
+
+        redis.get(JSON.stringify(redisKey), function(error, redisResponse) {
         if(redisResponse){
             var responseObject = JSON.parse(redisResponse);
             response.writeHeader(responseObject.statusCode, responseObject.headers);
@@ -59,5 +89,8 @@ acceptor.on('request', function(request, response) {
         else{
                 proxy(request, response);
             }
+        });
     });
+
+    request.pipe(requestReader);
 });
