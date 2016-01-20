@@ -9,7 +9,9 @@
   "dependencies": {
     "redis": "^2.4.2"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "mocha": "^2.3.4"
+  },
   "scripts": {
     "test": "mocha $(find ./ -name '*.tests.js')"
   },
