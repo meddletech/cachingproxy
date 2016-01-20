@@ -12,8 +12,10 @@ var
 
 var targetOrigin = process.env.TARGETORIGIN || 'http://localhost';
 var target = utils.parseTargetOrigin(targetOrigin);
-
 logger.info('target origin', target);
+
+var cacheLength = process.env.CACHELENGTH || 30 * 60; // 30 minutes
+logger.info('cahce length', cacheLength);
 
 var proxy = function(request, response){
     var options = url.parse(targetOrigin + request.url);
