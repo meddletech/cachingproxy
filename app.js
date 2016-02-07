@@ -2,6 +2,9 @@ var logger = require('winston');
 var port = process.env.PORT || 5000;
 logger.info('port set to', port);
 
+var redisDb = process.env.REDISDB || 1;
+logger.info('redis db set to', redisDb);
+
 var
     url = require('url'),
     http = require('http'),
@@ -11,6 +14,15 @@ var
     utils = require('./utils'),
     cacheControl = require('./cacheControl.js'),
     q = require('q');   
+
+redis.select(redisDb, function(err,res){
+  if(err){
+    logger.error('error during redis database select', err);
+  }
+  else{
+    logger.info('redis db selected', res);
+  }
+});
 
 var targetOrigin = process.env.TARGETORIGIN || 'http://localhost';
 var target = utils.parseTargetOrigin(targetOrigin);
@@ -125,7 +137,7 @@ var ProxyRequest = function(request, response, redis){
                     method: request.method
                 };
 
-                request.redisKey = JSON.stringify(redisKey);
+                request.redisKey = 'pc:' + JSON.stringify(redisKey);
 
                 cacheControl.handleInvalidation(request, redis, response)
                 .then(new Serve(request.redisKey, resolve, reject).handle)

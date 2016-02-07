@@ -18,7 +18,7 @@ var handleInvalidation = function(request, redis, response){
 		var matches = /^invalidate=(\*|url)$/.exec(request.headers['cache-control']);
 		if(matches){
 			if(matches[1] === '*'){
-				redis.del('*', callbackHandler);
+				redis.flushall(callbackHandler);
 				response['x-proxy-cache-cleared'] = '*';
 			}
 			else if(matches[1] === 'url'){
