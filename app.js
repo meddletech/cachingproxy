@@ -50,7 +50,7 @@ var serveFromTarget = function(request, response){
 
         caching.on('end', function(){
             redisObject.response = Buffer.concat(redisCachedResponse, totalLength);
-            var expire = 30 * 60; // 5 minutes
+            var expire = cacheLength;
 
             redis.set(request.redisKey, JSON.stringify(redisObject), 'NX', 'EX', expire, function(error){
                 if(error){
