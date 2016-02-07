@@ -8,6 +8,11 @@ var Redis = function(){
 		callback(null, '');
 	};
 
+	this.flushall = function(callback) {
+		deletedKey = '*';
+		callback(null, '');
+	};
+
 	this.deletedKey = function(){
 		return deletedKey;
 	};
@@ -23,7 +28,7 @@ describe('cacheControl.handleValidation', function(){
 			}
 		};
 
-		cacheControl.handleInvalidation(request, redis)
+		return cacheControl.handleInvalidation(request, redis)
 		.then(function(){
 			assert.equal(redis.deletedKey(), '*');		
 		});
