@@ -75,10 +75,19 @@ var serveFromTarget = function(request, response){
         });
 
         connector.on('error', function(err) {
-            response.statusCode = 502;
-            response.write('502: ' + targetOrigin + ' is not reachable\r\n');
-            response.end();
-            reject(502);
+            logger.error(err);
+            if(err.code === 'ENOTFOUND'){
+                response.statusCode = 502;
+                response.write('502: ' + targetOrigin + ' is not reachable\r\n');
+                response.end();
+                reject(502);    
+            }
+            else {
+                response.statusCode = 500;
+                response.write('500: unknown error reaching ' + targetOrigin + '\r\n');
+                response.end();
+                reject(500);       
+            }
         });
 
         var bodyStream = new pass();
@@ -114,9 +123,11 @@ var ProxyRequest = function(request, response, redis){
                     reject(error);
                 }
                 else if(redisResponse){
+                    logger.info('serving from cache: ' + request.url);
                     return serveFromRedis(redisResponse);
                 }
                 else{
+                    logger.info('serving from upstream: ' + request.url);
                     return serveFromTarget(request, response);
                 }
             });
