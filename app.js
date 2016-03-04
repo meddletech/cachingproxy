@@ -74,6 +74,13 @@ var serveFromTarget = function(request, response){
             serverResponse.pipe(response);
         });
 
+        connector.on('error', function(err) {
+            response.statusCode = 502;
+            response.write('502: ' + targetOrigin + ' is not reachable\r\n');
+            response.end();
+            reject(502);
+        });
+
         var bodyStream = new pass();
         request.bodyChunks.forEach(function(chunk){
             bodyStream.write(chunk);
